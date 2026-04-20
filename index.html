@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sapporo Trip Budget Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ed;
+    --surface: #ffffff;
+    --surface2: #f0ece4;
+    --border: #e0dbd0;
+    --text: #1a1714;
+    --text2: #6b6560;
+    --text3: #9c9690;
+    --accent: #2c5f8a;
+    --accent-light: #e8f0f7;
+    --green: #2a7a5a;
+    --green-light: #e6f4ee;
+    --amber: #b85c00;
+    --amber-light: #fdf0e3;
+    --red: #c0392b;
+    --red-light: #fbecea;
+    --transport: #2c5f8a;
+    --activity: #2a7a5a;
+    --food: #c45c2a;
+    --misc: #7a6e65;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--text);
+    color: #fff;
+    padding: 2rem 2rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+
+  .header-title span {
+    display: block;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.55em;
+    letter-spacing: 0.05em;
+  }
+
+  .header-meta {
+    margin-top: 0.75rem;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.03em;
+  }
+
+  .lang-btn {
+    display: flex;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .lang-btn button {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.55);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .lang-btn button.active {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 3rem;
+  }
+
+  /* Summary card */
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .summary-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .summary-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+
+  .summary-total-jpy {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.4rem;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .summary-total-sgd {
+    font-size: 14px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  .status-pill {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+  }
+
+  .status-ok { background: var(--green-light); color: var(--green); }
+  .status-warn { background: var(--amber-light); color: var(--amber); }
+  .status-over { background: var(--red-light); color: var(--red); }
+
+  .progress-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease, background 0.4s ease;
+  }
+
+  .breakdown-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .bd-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .bd-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Budget bar reference */
+  .budget-ref {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Section */
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 1.5rem 0 0.6rem;
+  }
+
+  .section-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text2);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .item-row:last-child { border-bottom: none; }
+  .item-row:hover { background: var(--surface2); }
+
+  .item-label {
+    flex: 1;
+    font-size: 13.5px;
+    color: var(--text);
+    min-width: 0;
+  }
+
+  .item-label small {
+    display: block;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 1px;
+  }
+
+  .item-select {
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 5px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    max-width: 170px;
+    flex-shrink: 0;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .item-select:focus { border-color: var(--accent); }
+
+  .item-price {
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 62px;
+    text-align: right;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .item-price-fixed {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    flex-shrink: 0;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    padding: 2rem 1rem;
+    letter-spacing: 0.03em;
+  }
+
+  @media (max-width: 480px) {
+    .item-row { flex-wrap: wrap; gap: 6px; padding: 0.7rem 1rem; }
+    .item-select { max-width: 100%; width: 100%; }
+    .item-price { min-width: auto; }
+    header { padding: 1.5rem 1rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <h1 class="header-title">
+        Sapporo
+        <span id="h-subtitle">3 nights · 4 days · Budget planner</span>
+      </h1>
+      <p class="header-meta" id="h-meta">Transport · Meals · Activities · Shopping — excl. flights &amp; hotel</p>
+    </div>
+    <div class="lang-btn">
+      <button class="active" onclick="setLang('en')" id="btn-en">EN</button>
+      <button onclick="setLang('ja')" id="btn-ja">日本語</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Summary -->
+  <div class="summary-card">
+    <div class="summary-top">
+      <div>
+        <div class="summary-label" id="lbl-total">Total (1 person · 4 days)</div>
+        <div class="summary-total-jpy" id="total-jpy">¥0</div>
+        <div class="summary-total-sgd" id="total-sgd">≈ S$0</div>
+      </div>
+      <span class="status-pill status-ok" id="status-pill">—</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <div class="budget-ref">
+      <span>¥0</span>
+      <span id="lbl-budget-ref">Budget: S$600 (¥72,000)</span>
+      <span>¥72,000</span>
+    </div>
+    <div class="breakdown-row" id="breakdown" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- Transport -->
+  <div class="section-head">
+    <div class="section-icon" style="background:#e8f0f7;">🚃</div>
+    <span class="section-title" id="sec-transport">Transportation</span>
+  </div>
+  <div class="card">
+    <div class="item-row">
+      <div class="item-label" id="lbl-airport">New Chitose Airport ↔ Sapporo (train)</div>
+      <span class="item-price-fixed">¥2,460</span>
+    </div>
+    <div class="item-row">
+      <div class="item-label" id="lbl-city">City transport (subway / bus)</div>
+      <select class="item-select" id="sel-city" onchange="calc()">
+        <option value="2000" data-en="Light use (¥2,000)" data-ja="少なめ（¥2,000）">Light use (¥2,000)</option>
+        <option value="4000" selected data-en="Moderate (¥4,000)" data-ja="普通（¥4,000）">Moderate (¥4,000)</option>
+        <option value="6000" data-en="Heavy use (¥6,000)" data-ja="多め（¥6,000）">Heavy use (¥6,000)</option>
+      </select>
+      <span class="item-price" id="p-city">¥4,000</span>
+    </div>
+    <div class="item-row">
+      <div class="item-label" id="lbl-asahikawa">Asahiyama Zoo — round trip</div>
+      <select class="item-select" id="sel-asahikawa" onchange="calc()">
+        <option value="0" data-en="Skip" data-ja="行かない">Skip</option>
+        <option value="6900" data-en="Train (¥6,900)" data-ja="電車（¥6,900）">Train (¥6,900)</option>
+        <option value="4500" data-en="Bus tour (¥4,500)" data-ja="バスツアー（¥4,500）">Bus tour (¥4,500)</option>
+      </select>
+      <span class="item-price" id="p-asahikawa">¥0</span>
+    </div>
+    <div class="item-row">
+      <div class="item-label" id="lbl-otaru">Otaru — round trip</div>
+      <select class="item-select" id="sel-otaru" onchange="calc()">
+        <option value="0" data-en="Skip" data-ja="行かない">Skip</option>
+        <option value="1340" selected data-en="Train (¥1,340)" data-ja="電車（¥1,340）">Train (¥1,340)</option>
+      </select>
+      <span class="item-price" id="p-otaru">¥1,340</span>
+    </div>
+  </div>
+
+  <!-- Activities -->
+  <div class="section-head">
+    <div class="section-icon" style="background:#e6f4ee;">🐾</div>
+    <span class="section-title" id="sec-activity">Activities &amp; Admission</span>
+  </div>
+  <div class="card">
+    <div class="item-row">
+      <div class="item-label" id="lbl-zoo">Asahiyama Zoo admission</div>
+      <select class="item-select" id="sel-zoo" onchange="calc()">
+        <option value="0" data-en="Skip" data-ja="行かない">Skip</option>
+        <option value="1080" selected data-en="Go (¥1,080)" data-ja="行く（¥1,080）">Go (¥1,080)</option>
+      </select>
+      <span class="item-price" id="p-zoo">¥1,080</span>
+    </div>
+    <div class="item-row">
+      <div class="item-label" id="lbl-act">Other activities</div>
+      <select class="item-select" id="sel-act" onchange="calc()">
+        <option value="0" data-en="None" data-ja="なし">None</option>
+        <option value="2000" selected data-en="A little (¥2,000)" data-ja="少し（¥2,000）">A little (¥2,000)</option>
+        <option value="5000" data-en="Several (¥5,000)" data-ja="複数（¥5,000）">Several (¥5,000)</option>
+        <option value="10000" data-en="Plenty (¥10,000)" data-ja="たっぷり（¥10,000）">Plenty (¥10,000)</option>
+      </select>
+      <span class="item-price" id="p-act">¥2,000</span>
+    </div>
+  </div>
+
+  <!-- Food -->
+  <div class="section-head">
+    <div class="section-icon" style="background:#fdf0e3;">🍣</div>
+    <span class="section-title" id="sec-food">Food (4-day total)</span>
+  </div>
+  <div class="card">
+    <div class="item-row">
+      <div class="item-label">
+        <span id="lbl-lunch">Lunch × 4</span>
+      </div>
+      <select class="item-select" id="sel-lunch" onchange="calc()">
+        <option value="4000" data-en="Ramen / rice bowls (¥1,000)" data-ja="ラーメン・丼など（¥1,000）">Ramen / rice bowls (¥1,000)</option>
+        <option value="6000" selected data-en="Conveyor sushi / set meals (¥1,500)" data-ja="回転寿司・定食（¥1,500）">Conveyor sushi / set meals (¥1,500)</option>
+        <option value="8000" data-en="Crab / seafood (¥2,000)" data-ja="カニ・海鮮など（¥2,000）">Crab / seafood (¥2,000)</option>
+      </select>
+      <span class="item-price" id="p-lunch">¥6,000</span>
+    </div>
+    <div class="item-row">
+      <div class="item-label">
+        <span id="lbl-dinner">Dinner × 3</span>
+        <small id="lbl-dinner-note">Biggest variable — try the options</small>
+      </div>
+      <select class="item-select" id="sel-dinner" onchange="calc()">
+        <option value="6000" data-en="Izakaya / ramen (¥2,000)" data-ja="居酒屋・ラーメン（¥2,000）">Izakaya / ramen (¥2,000)</option>
+        <option value="9000" selected data-en="Jingisukan / seafood (¥3,000)" data-ja="ジンギスカン・海鮮（¥3,000）">Jingisukan / seafood (¥3,000)</option>
+        <option value="15000" data-en="Crab restaurant (¥5,000)" data-ja="カニ専門店（¥5,000）">Crab restaurant (¥5,000)</option>
+        <option value="24000" data-en="High-end crab / kaiseki (¥8,000)" data-ja="高級カニ・割烹（¥8,000）">High-end crab / kaiseki (¥8,000)</option>
+      </select>
+      <span class="item-price" id="p-dinner">¥9,000</span>
+    </div>
+    <div class="item-row">
+      <div class="item-label" id="lbl-snack">Breakfast / café / snacks</div>
+      <select class="item-select" id="sel-snack" onchange="calc()">
+        <option value="2000" data-en="Light (¥2,000)" data-ja="少なめ（¥2,000）">Light (¥2,000)</option>
+        <option value="4000" selected data-en="Moderate (¥4,000)" data-ja="普通（¥4,000）">Moderate (¥4,000)</option>
+        <option value="6000" data-en="Generous (¥6,000)" data-ja="多め（¥6,000）">Generous (¥6,000)</option>
+      </select>
+      <span class="item-price" id="p-snack">¥4,000</span>
+    </div>
+  </div>
+
+  <!-- Shopping -->
+  <div class="section-head">
+    <div class="section-icon" style="background:#f3eeea;">🛍️</div>
+    <span class="section-title" id="sec-misc">Shopping &amp; Miscellaneous</span>
+  </div>
+  <div class="card">
+    <div class="item-row">
+      <div class="item-label" id="lbl-souvenir">Souvenirs &amp; shopping</div>
+      <select class="item-select" id="sel-souvenir" onchange="calc()">
+        <option value="3000" data-en="Light (¥3,000)" data-ja="少なめ（¥3,000）">Light (¥3,000)</option>
+        <option value="6000" selected data-en="Moderate (¥6,000)" data-ja="普通（¥6,000）">Moderate (¥6,000)</option>
+        <option value="10000" data-en="Plenty (¥10,000)" data-ja="たっぷり（¥10,000）">Plenty (¥10,000)</option>
+      </select>
+      <span class="item-price" id="p-souvenir">¥6,000</span>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<footer id="footer-note">Estimates only. Prices may vary. Exchange rate: 1 SGD ≈ ¥120.</footer>
+
+<script>
+const BUDGET = 72000;
+const RATE = 120;
+let lang = 'en';
+
+const i18n = {
+  en: {
+    subtitle: '3 nights · 4 days · Budget planner',
+    meta: 'Transport · Meals · Activities · Shopping — excl. flights & hotel',
+    lblTotal: 'Total (1 person · 4 days)',
+    budgetRef: 'Budget: S$600 (¥72,000)',
+    secTransport: 'Transportation',
+    secActivity: 'Activities & Admission',
+    secFood: 'Food (4-day total)',
+    secMisc: 'Shopping & Miscellaneous',
+    lblAirport: 'New Chitose Airport ↔ Sapporo (train)',
+    lblCity: 'City transport (subway / bus)',
+    lblAsahikawa: 'Asahiyama Zoo — round trip',
+    lblOtaru: 'Otaru — round trip',
+    lblZoo: 'Asahiyama Zoo admission',
+    lblAct: 'Other activities',
+    lblLunch: 'Lunch × 4',
+    lblDinner: 'Dinner × 3',
+    lblDinnerNote: 'Biggest variable — try the options',
+    lblSnack: 'Breakfast / café / snacks',
+    lblSouvenir: 'Souvenirs & shopping',
+    footer: 'Estimates only. Prices may vary. Exchange rate: 1 SGD ≈ ¥120.',
+    bdTransport: 'Transport',
+    bdActivity: 'Activities',
+    bdFood: 'Food',
+    bdMisc: 'Shopping',
+    statusOk: (r, rs) => `Within budget — ¥${r.toLocaleString()} (S$${rs}) left`,
+    statusOver: (rs) => `Over budget by S$${rs}`,
+  },
+  ja: {
+    subtitle: '3泊4日 · 旅費シミュレーター',
+    meta: '交通費・食事・アクティビティ・買い物（ホテル・航空券除く）',
+    lblTotal: '合計（1人・4日間）',
+    budgetRef: '予算：S$600（¥72,000）',
+    secTransport: '交通費',
+    secActivity: 'アクティビティ・入場料',
+    secFood: '食事（4日間合計）',
+    secMisc: 'お土産・雑費',
+    lblAirport: '新千歳空港 ↔ 札幌（電車）',
+    lblCity: '市内交通（地下鉄・バス）',
+    lblAsahikawa: '旭山動物園（往復交通）',
+    lblOtaru: '小樽（往復交通）',
+    lblZoo: '旭山動物園 入場料',
+    lblAct: 'その他アクティビティ',
+    lblLunch: 'ランチ × 4回',
+    lblDinner: 'ディナー × 3回',
+    lblDinnerNote: '最も差が出る項目 — 試してみてください',
+    lblSnack: '朝食・カフェ・おやつ',
+    lblSouvenir: 'お土産・ショッピング',
+    footer: '概算です。実際の金額は異なる場合があります。レート：1 SGD ≈ ¥120。',
+    bdTransport: '交通費',
+    bdActivity: 'アクティビティ',
+    bdFood: '食事',
+    bdMisc: 'お土産',
+    statusOk: (r, rs) => `予算内 — 残り ¥${r.toLocaleString()}（S$${rs}）`,
+    statusOver: (rs) => `予算オーバー S$${rs}`,
+  }
+};
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  document.getElementById('btn-ja').classList.toggle('active', l === 'ja');
+  document.documentElement.lang = l;
+
+  const t = i18n[l];
+  document.getElementById('h-subtitle').textContent = t.subtitle;
+  document.getElementById('h-meta').textContent = t.meta;
+  document.getElementById('lbl-total').textContent = t.lblTotal;
+  document.getElementById('lbl-budget-ref').textContent = t.budgetRef;
+  document.getElementById('sec-transport').textContent = t.secTransport;
+  document.getElementById('sec-activity').innerHTML = t.secActivity;
+  document.getElementById('sec-food').textContent = t.secFood;
+  document.getElementById('sec-misc').innerHTML = t.secMisc;
+  document.getElementById('lbl-airport').textContent = t.lblAirport;
+  document.getElementById('lbl-city').textContent = t.lblCity;
+  document.getElementById('lbl-asahikawa').textContent = t.lblAsahikawa;
+  document.getElementById('lbl-otaru').textContent = t.lblOtaru;
+  document.getElementById('lbl-zoo').textContent = t.lblZoo;
+  document.getElementById('lbl-act').textContent = t.lblAct;
+  document.getElementById('lbl-lunch').textContent = t.lblLunch;
+  document.getElementById('lbl-dinner').textContent = t.lblDinner;
+  document.getElementById('lbl-dinner-note').textContent = t.lblDinnerNote;
+  document.getElementById('lbl-snack').textContent = t.lblSnack;
+  document.getElementById('lbl-souvenir').innerHTML = t.lblSouvenir;
+  document.getElementById('footer-note').textContent = t.footer;
+
+  // Update select option labels
+  document.querySelectorAll('select option').forEach(opt => {
+    const label = opt.getAttribute('data-' + l);
+    if (label) opt.textContent = label;
+  });
+
+  calc();
+}
+
+function v(id) { return parseInt(document.getElementById(id).value, 10); }
+function setPrice(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = '¥' + val.toLocaleString();
+}
+
+function calc() {
+  const airportTrain = 2460;
+  const cityT = v('sel-city');       setPrice('p-city', cityT);
+  const asahikawa = v('sel-asahikawa'); setPrice('p-asahikawa', asahikawa);
+  const otaru = v('sel-otaru');      setPrice('p-otaru', otaru);
+  const zoo = v('sel-zoo');          setPrice('p-zoo', zoo);
+  const act = v('sel-act');          setPrice('p-act', act);
+  const lunch = v('sel-lunch');      setPrice('p-lunch', lunch);
+  const dinner = v('sel-dinner');    setPrice('p-dinner', dinner);
+  const snack = v('sel-snack');      setPrice('p-snack', snack);
+  const souvenir = v('sel-souvenir'); setPrice('p-souvenir', souvenir);
+
+  const transport = airportTrain + cityT + asahikawa + otaru;
+  const activity = zoo + act;
+  const food = lunch + dinner + snack;
+  const misc = souvenir;
+  const total = transport + activity + food + misc;
+  const totalSGD = Math.round(total / RATE);
+
+  document.getElementById('total-jpy').textContent = '¥' + total.toLocaleString();
+  document.getElementById('total-sgd').textContent = '≈ S$' + totalSGD.toLocaleString();
+
+  const pct = Math.min(total / BUDGET * 100, 100);
+  const fill = document.getElementById('prog-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = total <= 55000 ? '#2a7a5a' : total <= BUDGET ? '#b85c00' : '#c0392b';
+
+  const pill = document.getElementById('status-pill');
+  const remaining = BUDGET - total;
+  const remainSGD = Math.round(Math.abs(remaining) / RATE);
+  const t = i18n[lang];
+  if (total <= BUDGET) {
+    pill.className = 'status-pill status-ok';
+    pill.textContent = t.statusOk(remaining, remainSGD);
+  } else {
+    pill.className = 'status-pill status-over';
+    pill.textContent = t.statusOver(remainSGD);
+  }
+
+  const colors = { transport: '#2c5f8a', activity: '#2a7a5a', food: '#c45c2a', misc: '#7a6e65' };
+  const cats = [
+    ['transport', t.bdTransport, transport],
+    ['activity', t.bdActivity, activity],
+    ['food', t.bdFood, food],
+    ['misc', t.bdMisc, misc],
+  ];
+  document.getElementById('breakdown').innerHTML = cats.map(([k, lbl, val]) =>
+    `<span class="bd-chip"><span class="bd-dot" style="background:${colors[k]}"></span>${lbl}: ¥${val.toLocaleString()} (S$${Math.round(val/RATE)})</span>`
+  ).join('');
+}
+
+calc();
+</script>
+</body>
+</html>
